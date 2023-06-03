@@ -4,61 +4,83 @@ from firebase_admin import firestore
 from typing import List
 
 from Models.schemas.sentences import Sentence
+from Models.schemas.stats import StatsUser
 
-cred = credentials.Certificate("credenciales\clasificadortexto-firebase-adminsdk-hwvq5-21bd3f8190.json")
-firebase_admin.initialize_app(cred)
+class FireRepository():
 
-db = firestore.client()
+    cred = credentials.Certificate("credenciales\clasificadortexto-firebase-adminsdk-hwvq5-21bd3f8190.json")
+    firebase_admin.initialize_app(cred)
 
-def set_prediciones(user_id,comentarios: List[Sentence]):
-    batch = db.batch()
-    sentences_collection = db.collection('usuarios').document(user_id).collection('comentarios')  # Se obtiene una referencia de documento para la colección
+    db = firestore.client()
 
-    for comentario in comentarios:
-        doc_ref = sentences_collection.document(comentario.id)  # Obtener una referencia de documento única para cada objeto Sentence
-        batch.set(doc_ref, comentario.dict())
+    
+    def get_stats(self,user_id):
+        return self.db.collection('usuarios').document(user_id).get().to_dict() 
+        
+    def set_stats(self,user_id,stats:StatsUser):
+        return self.db.collection('usuarios').document(user_id).set(stats.dict())
+        
+        
+    def update_stats(self,user_id,stats:StatsUser):
+        return self.db.collection('usuarios').document(user_id).update(stats.dict())
+        
 
-    batch.commit()
-    return sentences_collection.id
+    def set_prediciones(self,user_id,comentarios: List[Sentence]):
+        batch = self.db.batch()
+        sentences_collection = self.db.collection('usuarios').document(user_id).collection('comentarios')  # Se obtiene una referencia de documento para la colección
 
-def get_predicciones(user_id):
-    sentences = []
-    collection_ref = db.collection('usuarios').document(user_id).collection('comentarios').get()
+        for comentario in comentarios:
+            doc_ref = sentences_collection.document(comentario.id)  # Obtener una referencia de documento única para cada objeto Sentence
+            batch.set(doc_ref, comentario.dict())
 
-    for doc in collection_ref:
-        sentence_data = doc.to_dict()  # Obtener los datos del documento como un diccionario
-        sentence = Sentence(**sentence_data)  # Crear una instancia de Sentence usando los datos del documento
-        sentences.append(sentence)
+        batch.commit()
+        return sentences_collection.id
 
-    return sentences
+    def get_predicciones(self,user_id):
+        sentences = []
+        collection_ref = self.db.collection('usuarios').document(user_id).collection('comentarios').get()
 
-def get_prediccion(user_id,coment_id):
-    collection_ref = db.collection('usuarios').document(user_id).collection('comentarios')
-    return collection_ref.document(coment_id).get().to_dict() 
+        for doc in collection_ref:
+            sentence_data = doc.to_dict()  # Obtener los datos del documento como un diccionario
+            sentence = Sentence(**sentence_data)  # Crear una instancia de Sentence usando los datos del documento
+            sentences.append(sentence)
 
-def update_predicciones(user_id: str, comentarios: List[Sentence]):
-    batch = db.batch()
+        return sentences
 
-    for sentence in comentarios:
-        # Excluir el campo 'id' del diccionario de datos
-        sentence_data = sentence.dict(exclude={'id'})
-        doc_ref = db.collection('usuarios').document(user_id).collection('comentarios').document(sentence.id)
-        batch.update(doc_ref, sentence_data)
+    def get_prediccion(self,user_id,coment_id):
+        collection_ref = self.db.collection('usuarios').document(user_id).collection('comentarios')
+        return collection_ref.document(coment_id).get().to_dict() 
 
-    batch.commit()
-    return comentarios
+    def update_predicciones(self,user_id: str, comentarios: List[Sentence]):
+        batch = self.db.batch()
 
+        for sentence in comentarios:
+            # Excluir el campo 'id' del diccionario de datos
+            sentence_data = sentence.dict(exclude={'id'})
+            doc_ref = self.db.collection('usuarios').document(user_id).collection('comentarios').document(sentence.id)
+            batch.update(doc_ref, sentence_data)
 
-def deled_prediccion(user_id,coment_id):
-    comment_ref = db.collection('usuarios').document(user_id).collection('comentarios').document(coment_id)
-    comment_doc = comment_ref.get()
-
-    if comment_doc.exists:
-        comment_ref.delete()
-        return True
-    else:
-        return False
+        batch.commit()
+        return comentarios
 
 
+    def deled_prediccion(self,user_id,coment_id):
+        comment_ref = self.db.collection('usuarios').document(user_id).collection('comentarios').document(coment_id)
+        comment_doc = comment_ref.get()
+
+        if comment_doc.exists:
+            comment_ref.delete()
+            return True
+        else:
+            return False
+
+    def user_exist(self,user_id):
+        comment_ref = self.db.collection('usuarios').document(user_id)
+        comment_doc = comment_ref.get()
+
+        if comment_doc.exists:
+            return True
+        else:
+            return False
 
 

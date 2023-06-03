@@ -5,4 +5,4 @@ class Sentence(BaseModel):
     id: str = ''
     text: str
     probabilidades: List[float] = [] 
-    categoria: int = 0
+    categoria: int = -1
