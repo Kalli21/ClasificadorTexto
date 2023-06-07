@@ -7,7 +7,7 @@ from Models.schemas.sentences import Sentence
 from Models.schemas.stats import StatsUser
 
 class FireRepository():
-
+    
     cred = credentials.Certificate("credenciales\clasificadortexto-firebase-adminsdk-hwvq5-21bd3f8190.json")
     firebase_admin.initialize_app(cred)
 
