@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import List
+from Models.schemas.infoGrafGeneral import  InfoCategoria, InfoCategoriaResp, InfoComentario, InfoGrafGeneral, InfoProductoRanking, RequestGestionarDatos
+from Models.schemas.request.filtroComentario import FiltroComentario
 from Models.schemas.sentences import Sentence
 from Models.schemas.stats import StatsUser
 from Models_IA.service import IAservices
@@ -13,7 +15,8 @@ app = FastAPI()
 # Configuración de CORS
 origins = [
     "http://localhost",
-    "http://localhost:4200",  # Agrega la URL de tu aplicación Angular aquí
+    "http://localhost:4200",
+    "http://127.0.0.1:8888",
 ]
 
 app.add_middleware(
@@ -52,10 +55,14 @@ def text_clasificador(user_id):
 
 
 @app.get("/stats/{user_id}")
-def text_clasificador(user_id):
+def get_stats(user_id):
     return repo.get_stats(user_id)
     
-
+@app.post("/stats/{user_id}")
+def build_stats(user_id, ids:List[str],filtro:List[int]):
+    return repo.build_stats(user_id,ids,filtro)
+    
+    
 # Obtener todas las oraciones
 @app.get("/comentarios/{user_id}", response_model=List[Sentence])
 def get_sentences(user_id: str):
@@ -84,3 +91,52 @@ def delete_sentences(user_id: str, sentence_id: str):
     deleted = repo.deled_prediccion(user_id, sentence_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Comentario no encontrado")
+    
+##################
+#########
+@app.post("/comentarios/group/{user_id}")
+def get_comentarios_group_fecha(user_id: str,filtros:FiltroComentario):
+    resultados = repo.get_comentarios_group_fecha(user_id,filtros)
+    json_resultados = jsonable_encoder(resultados)
+    return json_resultados
+    
+
+@app.post("/getionar/{user_id}")
+def gestionar_info(user_id: str,req: RequestGestionarDatos):
+    resp = []
+    prodRank = []
+    coment_ids = []
+    stastGeneral = StatsUser()
+    obj = req.categorias
+    for cat in obj:
+        newCat = InfoCategoriaResp()
+        newCat.nombre = cat.nombre
+        
+        for prod in cat.productos:
+            newPrd = InfoProductoRanking()
+            newPrd.nombre = prod.nombre
+            ids = []
+            for com in prod.comentarios:
+                ids.append(str(com.id))
+                # coment_ids.append(str(com.id))
+            statsBuildAux = repo.build_stats(user_id,ids,req.filtrosSentimiento)
+            coment_ids.extend(statsBuildAux.comentarios_ids)
+            newPrd.stats = statsBuildAux.infoCirculo
+            newCat.stats.neg += newPrd.stats.neg
+            newCat.stats.net += newPrd.stats.net
+            newCat.stats.pos += newPrd.stats.pos
+            newCat.stats.total += newPrd.stats.total
+            prodRank.append(newPrd)
+        stastGeneral.neg += newCat.stats.neg
+        stastGeneral.net += newCat.stats.net
+        stastGeneral.pos += newCat.stats.pos
+        stastGeneral.total += newCat.stats.total
+        resp.append(newCat)
+    prodRank = sorted(prodRank, key=lambda x: x.stats.pos, reverse=True)
+    result = InfoGrafGeneral()
+    result.infoCategoria = resp
+    result.infoTopPos = prodRank
+    result.comentariosIds = coment_ids
+    result.stastGeneral = stastGeneral  
+    json_resultados = jsonable_encoder(result)
+    return json_resultados
