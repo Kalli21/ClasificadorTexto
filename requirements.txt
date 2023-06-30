@@ -72,4 +72,3 @@ tensorflow-text==2.10.0
 termcolor==2.3.0
 typing_extensions==4.5.0
 tzdata==2023.3
-uritemplate==4.1.1
