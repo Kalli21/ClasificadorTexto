@@ -9,7 +9,7 @@ charset-normalizer==3.1.0
 click==8.1.3
 colorama==0.4.6
 cryptography==41.0.1
-fastapi==0.95.1
+fastapi
 firebase-admin==6.1.0
 flatbuffers==23.5.9
 gast==0.4.0
@@ -60,7 +60,7 @@ requests-oauthlib==1.3.1
 rsa==4.9
 six==1.16.0
 sniffio==1.3.0
-starlette==0.28.0
+starlette
 tensorboard==2.10.1
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
