@@ -145,14 +145,14 @@ class FireRepository():
             
         #     comentarios_agrupados[anio][mes].append(doc.to_dict())
             
-        # # Calcular el número de veces que se repite cada categoría (0, 1, 2) en cada mes
-        # for anio, meses in comentarios_agrupados.items():
-        #     for mes, comentarios in meses.items():
-        #         categorias_count = [0, 0, 0]
-        #         for comentario in comentarios:
-        #             categoria = comentario.get('categoria')
-        #             categorias_count[categoria] += 1
-        #         comentarios_agrupados[anio][mes].append((('cantCategoria', categorias_count),('anio', anio),('mes', mes)))
+        # Calcular el número de veces que se repite cada categoría (0, 1, 2) en cada mes
+        for anio, meses in comentarios_agrupados.items():
+            for mes, comentarios in meses.items():
+                categorias_count = [0, 0, 0]
+                for comentario in comentarios:
+                    categoria = comentario.get('categoria')
+                    categorias_count[categoria] += 1
+                comentarios_agrupados[anio][mes].append((('cantCategoria', categorias_count),('anio', anio),('mes', mes)))
 
 
         return comentarios_agrupados
@@ -175,11 +175,4 @@ class FireRepository():
             
             comentarios_agrupados[anio][mes].append(doc.to_dict())
             
-        # Calcular el número de veces que se repite cada categoría (0, 1, 2) en cada mes
-        for anio, meses in comentarios_agrupados.items():
-            for mes, comentarios in meses.items():
-                categorias_count = [0, 0, 0]
-                for comentario in comentarios:
-                    categoria = comentario.get('categoria')
-                    categorias_count[categoria] += 1
-                comentarios_agrupados[anio][mes].append((('cantCategoria', categorias_count),('anio', anio),('mes', mes)))
+
