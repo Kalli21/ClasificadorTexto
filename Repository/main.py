@@ -111,16 +111,53 @@ class FireRepository():
         # Crear un diccionario para agrupar los comentarios por mes y año
         comentarios_agrupados = {}     
         
+        
         # Realizar la consulta y obtener los comentarios ordenados por fecha
         if( not filtros.filtrarIds ):            
             query = sentences_collection.order_by('fecha').get()
+            self.iterarQuery(query,comentarios_agrupados)
         else :
             if( not filtros or not filtros.comentarios_id or len(filtros.comentarios_id) == 0 ):
                 return comentarios_agrupados
-            query = sentences_collection.where('id', 'in', filtros.comentarios_id).get()
-        
-        
+            # query = sentences_collection.where('id', 'in', filtros.comentarios_id).get()
+            # Dividir la lista de IDs en subconjuntos más pequeños
+            subconjuntos_ids = [filtros.comentarios_id[i:i + 30] for i in range(0, len(filtros.comentarios_id), 30)]
 
+            # Realizar consultas separadas para cada subconjunto de IDs
+            for subconjunto in subconjuntos_ids:
+                query = sentences_collection.where('id', 'in', subconjunto).get()
+                self.iterarQuery(query,comentarios_agrupados)
+
+        # # Recorrer los documentos y agruparlos por mes y año
+        # for doc in query:
+        #     fecha = doc.get('fecha')  # Obtener el objeto Timestamp directamente
+            
+        #     # Obtener el año y mes de la fecha
+        #     anio = fecha.year
+        #     mes = fecha.month
+            
+        #     # Agrupar los comentarios por mes y año
+        #     if anio not in comentarios_agrupados:
+        #         comentarios_agrupados[anio] = {}
+            
+        #     if mes not in comentarios_agrupados[anio]:
+        #         comentarios_agrupados[anio][mes] = []
+            
+        #     comentarios_agrupados[anio][mes].append(doc.to_dict())
+            
+        # # Calcular el número de veces que se repite cada categoría (0, 1, 2) en cada mes
+        # for anio, meses in comentarios_agrupados.items():
+        #     for mes, comentarios in meses.items():
+        #         categorias_count = [0, 0, 0]
+        #         for comentario in comentarios:
+        #             categoria = comentario.get('categoria')
+        #             categorias_count[categoria] += 1
+        #         comentarios_agrupados[anio][mes].append((('cantCategoria', categorias_count),('anio', anio),('mes', mes)))
+
+
+        return comentarios_agrupados
+    
+    def iterarQuery(self,query,comentarios_agrupados):
         # Recorrer los documentos y agruparlos por mes y año
         for doc in query:
             fecha = doc.get('fecha')  # Obtener el objeto Timestamp directamente
@@ -146,6 +183,3 @@ class FireRepository():
                     categoria = comentario.get('categoria')
                     categorias_count[categoria] += 1
                 comentarios_agrupados[anio][mes].append((('cantCategoria', categorias_count),('anio', anio),('mes', mes)))
-
-
-        return comentarios_agrupados
