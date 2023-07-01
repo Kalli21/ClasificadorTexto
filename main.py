@@ -103,40 +103,6 @@ def get_comentarios_group_fecha(user_id: str,filtros:FiltroComentario):
 
 @app.post("/getionar/{user_id}")
 def gestionar_info(user_id: str,req: RequestGestionarDatos):
-    resp = []
-    prodRank = []
-    coment_ids = []
-    stastGeneral = StatsUser()
-    obj = req.categorias
-    for cat in obj:
-        newCat = InfoCategoriaResp()
-        newCat.nombre = cat.nombre
-        
-        for prod in cat.productos:
-            newPrd = InfoProductoRanking()
-            newPrd.nombre = prod.nombre
-            ids = []
-            for com in prod.comentarios:
-                ids.append(str(com.id))
-                # coment_ids.append(str(com.id))
-            statsBuildAux = repo.build_stats(user_id,ids,req.filtrosSentimiento)
-            coment_ids.extend(statsBuildAux.comentarios_ids)
-            newPrd.stats = statsBuildAux.infoCirculo
-            newCat.stats.neg += newPrd.stats.neg
-            newCat.stats.net += newPrd.stats.net
-            newCat.stats.pos += newPrd.stats.pos
-            newCat.stats.total += newPrd.stats.total
-            prodRank.append(newPrd)
-        stastGeneral.neg += newCat.stats.neg
-        stastGeneral.net += newCat.stats.net
-        stastGeneral.pos += newCat.stats.pos
-        stastGeneral.total += newCat.stats.total
-        resp.append(newCat)
-    prodRank = sorted(prodRank, key=lambda x: x.stats.pos, reverse=True)
-    result = InfoGrafGeneral()
-    result.infoCategoria = resp
-    result.infoTopPos = prodRank
-    result.comentariosIds = coment_ids
-    result.stastGeneral = stastGeneral  
-    json_resultados = jsonable_encoder(result)
+    resultados = repo.gestionar_info(user_id,req)      
+    json_resultados = jsonable_encoder(resultados)
     return json_resultados
