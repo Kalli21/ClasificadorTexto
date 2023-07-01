@@ -109,15 +109,14 @@ class FireRepository():
         sentences_collection = self.db.collection('usuarios').document(user_id).collection('comentarios')
 
         # Crear un diccionario para agrupar los comentarios por mes y año
-        comentarios_agrupados = {}
-        
-        if( not filtros or not filtros.comentarios_id or len(filtros.comentarios_id) == 0 ):
-            return comentarios_agrupados
+        comentarios_agrupados = {}     
         
         # Realizar la consulta y obtener los comentarios ordenados por fecha
         if( not filtros.filtrarIds ):            
             query = sentences_collection.order_by('fecha').get()
         else :
+            if( not filtros or not filtros.comentarios_id or len(filtros.comentarios_id) == 0 ):
+                return comentarios_agrupados
             query = sentences_collection.where('id', 'in', filtros.comentarios_id).get()
         
         
