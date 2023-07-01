@@ -2,7 +2,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from typing import List
-from Models.schemas.infoGrafGeneral import InfoGrafGeneral, RequestGestionarDatos
+from Models.schemas.infoGrafGeneral import  InfoCategoria, InfoCategoriaResp, InfoComentario, InfoGrafGeneral, InfoProductoRanking, RequestGestionarDatos
 from Models.schemas.infoGrafProducto import InfoGrafProducto
 from Models.schemas.request.filtroComentario import FiltroComentario
 
