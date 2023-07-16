@@ -18,7 +18,8 @@ origins = [
     "http://localhost:4200",
     "http://127.0.0.1:8888",
     "http://54.87.222.35",
-    "http://54.83.42.195:8080"    
+    "http://54.83.42.195:8080",
+    "http://proyecto-tesis-acfront-angular.s3-website-us-east-1.amazonaws.com"    
 ]
 
 app.add_middleware(
