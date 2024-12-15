@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from typing import List
-from Models.schemas.stats import StatsUser
+from typing import List, Optional
+from Models.schemas.stats import StatsUser, BaseInfo, BaseStats
 
 class InfoComentario(BaseModel):
     id: int
@@ -49,3 +49,9 @@ class RequestGestionarDatos(BaseModel):
     categorias: List[InfoCategoria]
     filtrosSentimiento: List[int]
     
+class InfoGrafGeneral_V2(BaseModel):
+    graf_circulo: Optional[BaseStats] = None
+    graf_rank_pos: Optional[List[BaseInfo]] = None
+    graf_rank_neg: Optional[List[BaseInfo]] = None
+    graf_bar_cat: Optional[List[BaseInfo]] = None
+    graf_bar_date: Optional[List[BaseInfo]] = None

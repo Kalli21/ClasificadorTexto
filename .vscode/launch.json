@@ -13,7 +13,7 @@
             "args": [
                 "main:app",
                 "--port",
-                "8001",
+                "8003",
                 "--reload"
             ],
             "jinja": true

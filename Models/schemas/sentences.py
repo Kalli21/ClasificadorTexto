@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 class Sentence(BaseModel):
@@ -7,4 +7,4 @@ class Sentence(BaseModel):
     text: str
     probabilidades: List[float] = [] 
     categoria: int = -1
-    fecha: datetime
+    fecha: Optional[datetime]

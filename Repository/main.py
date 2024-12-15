@@ -2,13 +2,16 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from typing import List
-from Models.schemas.infoGrafGeneral import  InfoCategoria, InfoCategoriaResp, InfoComentario, InfoGrafGeneral, InfoProductoRanking, RequestGestionarDatos
+from Models.schemas.infoGrafGeneral import  InfoCategoria, InfoCategoriaResp, InfoGrafGeneral_V2, InfoGrafGeneral, InfoProductoRanking, RequestGestionarDatos
 from Models.schemas.infoGrafProducto import InfoGrafProducto
-from Models.schemas.request.filtroComentario import FiltroComentario
+from Models.schemas.request.filtroComentario import FiltroComentario, FiltroSentences
 
 from Models.schemas.sentences import Sentence
-from Models.schemas.stats import StatsUser
+from Models.schemas.stats import StatsUser, BaseStats
 from math import ceil
+from fastapi.encoders import jsonable_encoder
+
+from google.cloud.firestore import FieldFilter
 
 class FireRepository():
     
@@ -23,10 +26,18 @@ class FireRepository():
         
     def set_stats(self,user_id,stats:StatsUser):
         return self.db.collection('usuarios').document(user_id).set(stats.dict())
-        
-        
+                
     def update_stats(self,user_id,stats:StatsUser):
-        return self.db.collection('usuarios').document(user_id).update(stats.dict())
+        # Convierte el objeto StatsUser a un diccionario serializable
+        stats_dict = jsonable_encoder(stats)        
+        # Actualiza el documento en Firestore
+        self.db.collection('usuarios').document(user_id).update(stats_dict)
+     
+    def update_base_stats(self,user_id,stats:BaseStats):
+        # Convierte el objeto StatsUser a un diccionario serializable
+        stats_dict = jsonable_encoder(stats)        
+        # Actualiza el documento en Firestore
+        self.db.collection('usuarios').document(user_id).update(stats_dict) 
         
     def build_stats(self,user_id,ids,filtro):
         stats = StatsUser()
@@ -57,15 +68,23 @@ class FireRepository():
         batch.commit()
         return sentences_collection.id
 
-    def get_predicciones(self,user_id):
+    def get_predicciones(self, user_id, filtro: FiltroSentences  = None):
         sentences = []
-        collection_ref = self.db.collection('usuarios').document(user_id).collection('comentarios').get()
-
-        for doc in collection_ref:
+        docs = self.db.collection('usuarios').document(user_id).collection('comentarios')
+        
+        if filtro:
+            if len(filtro.listId)>0: docs = docs.where(filter = FieldFilter('id', 'in', filtro.listId))
+            if filtro.fechaIni: docs = docs.where(filter = FieldFilter('fecha', '>=', filtro.fechaIni))
+            if filtro.fechaFin: docs = docs.where(filter = FieldFilter('fecha', '<=', filtro.fechaFin))
+            if len(filtro.categoriasId)>0: docs = docs.where(filter = FieldFilter('categoria', 'in', filtro.categoriasId))
+        
+        docs = docs.get()
+    
+        for doc in docs:
             sentence_data = doc.to_dict()  # Obtener los datos del documento como un diccionario
-            sentence = Sentence(**sentence_data)  # Crear una instancia de Sentence usando los datos del documento
-            sentences.append(sentence)
-
+            sentence = Sentence(**sentence_data)  # Crear una instancia de Sentence usando los datos del documento            
+            sentences.append(sentence)                
+                
         return sentences
 
     def get_prediccion(self,user_id,coment_id):
@@ -120,7 +139,42 @@ class FireRepository():
         else:
             return False
 
+    def delete_user(self, user_id):
+        # Obtén una referencia al documento principal
+        user_ref = self.db.collection('usuarios').document(user_id)
 
+        # Verifica si el documento existe
+        if user_ref.get().exists:
+            # Elimina las subcolecciones usando lotes
+            self._delete_subcollections_in_batches(user_ref)
+
+            # Elimina el documento principal
+            user_ref.delete()
+            return True
+        else:
+            return False
+
+    def _delete_subcollections_in_batches(self, document_ref):
+        # Obtén todas las subcolecciones
+        subcollections = document_ref.collections()
+
+        for subcollection in subcollections:
+            while True:
+                # Obtén hasta 500 documentos de la subcolección
+                docs = list(subcollection.limit(500).stream())
+
+                if not docs:
+                    break  # Si no hay más documentos, termina el ciclo
+
+                # Inicia un batch
+                batch = self.db.batch()
+
+                # Añade cada documento al batch para eliminar
+                for doc in docs:
+                    batch.delete(doc.reference)
+
+                # Ejecuta el batch
+                batch.commit()
 ###########
     def gestionar_info(self,user_id: str,req: RequestGestionarDatos):
         resp = []
@@ -213,5 +267,31 @@ class FireRepository():
                 comentarios_agrupados[anio][mes] = []
             
             comentarios_agrupados[anio][mes].append(doc.to_dict())
+            
+###### SET INFOR
+
+    async def clear_and_set_info(self, user_id: str, coll : str, list_info: InfoGrafGeneral_V2):
+        # Obtiene la referencia de la subcolección
+        subcollection_ref = self.db.collection('usuarios').document(user_id).collection(coll)
+
+        # 1. Elimina todos los documentos en la subcolección
+        await self._clear_subcollection(subcollection_ref)
+        
+        body = list_info.dict()
+        subcollection_ref.add(body)
+        
+        # 2. Inserta los nuevos elementos en la subcolección
+        # for item in list_info:
+        #     body = item.dict()  
+        #     subcollection_ref.add(body)
+
+        return f"Se inserto informacion de {coll}"
+
+    async def _clear_subcollection(self, subcollection_ref):
+        # Obtiene todos los documentos de la subcolección
+        docs = subcollection_ref.stream()
+        # Elimina cada documento encontrado
+        for doc in docs:
+            doc.reference.delete()
             
 
