@@ -1,6 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,firebase
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,firebase
 
+textClasificador-env/
 Models_IA/algoritmo_DL/
 credenciales/
 ### Firebase ###
